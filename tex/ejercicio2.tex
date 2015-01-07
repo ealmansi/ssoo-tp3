@@ -1,0 +1,83 @@
+\subsection{Punto 2}
+Por cada puntaje de review (1-5) encontrar las palabras más frecuentes en sus respectivas reseñas sin contar stop words.
+
+\subsubsection{Descripción}
+
+Función \textbf{map}:\\\\
+En este paso tomamos el texto de la review y lo separamos en tokens obteniendo un array de palabras. A su vez disponemos de un array de stopwords que usaremos a continuación. Si el array de palabras del review no es vacío, tomamos cada palabra y removemos sus caracteres no alfanuméricos. Luego si la palabra no corresponde a un stopword le asignamos un 1 al nivel de score que corresponde a la reseña en cuestión. Para ello se utiliza un objeto que contiene un contador para cada nivel de score como propiedad. Luego emitimos este objeto como value con la palabra en cuestión como key:
+
+\begin{lstlisting}[frame=leftline]
+  function() {
+    var stopwords = [...];
+    var words = this.text.split(" ");	//array of words from text
+    if (words) {
+      //not empty array
+      for (var i=0; i < words.length; i++) {
+        //words in lower case, without punctuation and special chars
+        var word = words[i].toLowerCase().replace(/[^a-zA-Z 0-9]+/g,'');
+        if (stopwords.indexOf(word) == -1 && word){	
+          //not stop word or empty word
+          value = {s1: 0, s2: 0, s3: 0, s4: 0, s5: 0};	// count for each score
+          var index = this.score;
+          if (index == 1) {
+            value.s1 = 1;
+          }				
+          else if(index == 2){
+            value.s2 = 1;
+          }
+          else if(index == 3){
+            value.s3 = 1;
+          }
+          else if(index == 4){
+            value.s4 = 1;
+          }
+          else{
+            value.s5 = 1;
+          }
+          emit(word,value);
+        }
+      }
+    }
+  }
+\end{lstlisting}
+
+Functión \textbf{reduce}:\\\\
+En este paso se acumula para cada palabra emitida la cantidad de ocurrencias en cada nivel de score:
+
+\begin{lstlisting}[frame=leftline]
+  function (key, values) { 
+    reducedValue = {s1: 0, s2: 0, s3: 0, s4: 0, s5: 0};
+    for(var i=0; i < values.length; i++) {	//total occurrences for words
+      reducedValue.s1 += values[i].s1;
+      reducedValue.s2 += values[i].s2;
+      reducedValue.s3 += values[i].s3;
+      reducedValue.s4 += values[i].s4;
+      reducedValue.s5 += values[i].s5;
+    }
+    return reducedValue;
+  }
+\end{lstlisting}
+
+\subsubsection{Resultado}
+
+Para la obtención de los datos pedidos modificamos el archivo \textit{runner.py} para que guarde la ejecución de \textbf{mapreduce} en una nueva colección llamada ``ej2'' y luego le pida a \textit{mongo} que por cada valor de ``score'' ordene los resultados en forma decreciente respecto al valor obtenido y nos devuelva los primeros 5 resultados solamente.\\
+
+\begin{lstlisting}[frame=leftline]
+getattr(db,outcoll).aggregate([{"$out" : outcoll}])
+for i in range(1,6):
+	coll = getattr(db,outcoll).find().sort("value.s" + str(i),-1).limit(5)
+	print u"Las 5 palabras mas frecuentemente usadas con score = %s son (" % i,
+	for res in coll:
+		print "%s" % res['_id'],
+	print ")"
+\end{lstlisting}
+
+Los resultados obtenidos fueron los siguientes:
+
+\begin{enumerate}
+\item Las 5 palabras mas  usadas con score = 1 son: movie, one, film, dvd, even
+\item Las 5 palabras mas  usadas con score = 2 son: movie, film, one, good, dvd 
+\item Las 5 palabras mas  usadas con score = 3 son: movie, film, good, one, dvd 
+\item Las 5 palabras mas  usadas con score = 4 son: movie, film, good, one, great
+\item Las 5 palabras mas  usadas con score = 5 son: movie, one, great, film, dvd 
+\end{enumerate}

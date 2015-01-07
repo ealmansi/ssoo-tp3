@@ -1,0 +1,50 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage{a4wide}
+\usepackage[spanish,activeacute]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{placeins}
+\usepackage[colorlinks,citecolor=black,filecolor=black,linkcolor=black,    urlcolor=black]{hyperref}
+\usepackage{enumitem}
+\floatstyle{boxed}
+\newfloat{tarea}{thpH}{lop}
+\floatname{tarea}{Lote}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  %keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+%  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\begin{document}
+\lstset{language=JavaScript}
+\lstset{ %
+  basicstyle=\small
+}
+
+\markboth{left head}{Sistemas Operativos 2014 -- TP N\textordmasculine 3}
+\pagestyle{myheadings}
+
+\input{frontpage}
+
+\clearpage
+\tableofcontents
+
+\clearpage
+\input{intro}
+\input{ejercicio1}
+\input{ejercicio2}
+\input{ejercicio3}
+\input{ejercicio4}
+\input{escalabilidad}
+
+\end{document}

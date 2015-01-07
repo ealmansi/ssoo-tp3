@@ -1,0 +1,92 @@
+\section{Análisis de los datos}
+
+A continuación detallamos la implementación de las funciones para cada uno de los análisis pedidos:
+
+\subsection{Punto 1}
+
+Encontrar las doce películas mejor rankeadas de la colección de reseñas con al menos veinte reseñas.
+
+\subsubsection{Descripción}
+
+Función \textbf{map}:\\\\
+En este paso emitimos como key al \emph{productId} del documento (que identifica a la película), y como \emph{value} un objeto con las siguientes propiedades:
+
+\begin{description}
+	\item[count:] cantidad de reseñas.
+	\item[score:] puntaje otorgado a la película por el reviewer.
+\end{description}
+
+\begin{lstlisting}[frame=leftline]
+  function() {
+    key = this.productId;
+    value = { 
+      count: 1,                       // ocurrences
+      score: parseInt(this.score,10)  // score
+    };
+    emit(key, value);
+  }
+\end{lstlisting}
+
+Función \textbf{reduce}:\\\\
+En este paso se acumula la cantidad total de reseñas en la propiedad \textbf{count} y la suma de todos los puntajes en la propiedad \textbf{score}:
+
+\begin{lstlisting}[frame=leftline]
+  function (key, values) {
+    reducedValue = {
+      count: 0,
+      score: 0,
+    };
+    for (var i=0; i < values.length; i++){
+      reducedValue.count += values[i].count;	// total ocurrences
+      reducedValue.score += values[i].score;	// total score
+    }
+    return reducedValue;
+  }
+\end{lstlisting}
+
+Función \textbf{finalize}:\\\\
+Como queremos considerar sólo las películas con al menos veinte reseñas, hacemos uso de esta función con el siguiente código:\\
+
+\begin{lstlisting}[frame=leftline]
+  function (key, reducedValue) { 
+    if(reducedValue.count >= 20){
+      return reducedValue.score/reducedValue.count;	// average score
+    }
+    else{
+      return 0;
+    }
+  }
+\end{lstlisting}
+
+Donde si la cantidad de reseñas es mayor o igual a 20, devolvemos el promedio de las mismas dividiendo el score total por la cantidad de reseñas, caso contrario devolvemos 0.
+
+\subsubsection{Resultado}
+
+Para la obtención de los datos pedidos modificamos el archivo \textit{runner.py} para que guarde la ejecución de \textbf{mapreduce} en una nueva colección llamada ``ej1'' y luego le pida a \textit{mongo} que ordene los resultados en forma decreciente respecto al valor obtenido y nos devuelva los primeros 12 resultados solamente.\\
+
+\begin{lstlisting}[frame=leftline]
+getattr(db,outcoll).aggregate([{"$sort":SON([("value",-1)])},
+  {"$limit":12},{"$out":outcoll}])
+coll = getattr(db,outcoll).find()
+print "Los producId de las 12 peliculas mejor rankeadas en amazon son (",
+for res in coll:
+	print res['_id'],
+print ")"
+\end{lstlisting}
+
+Los resultados obtenidos fueron los siguientes:
+\begin{enumerate}
+\item B0002NY7UY : Live in Concert [VHS]
+\item B0007GAEXK : The Mole - The Complete First Season (2001)
+\item B00000JSJ5 : All Creatures Great and Small, Series 2: Volumes 1-6 [VHS] (1990)
+\item B0007Z4HAC : Salsa Crazy Presents: Learn to Salsa Dance, Intermediate Series, Volume 1 (2005)
+\item B000AOEPU2 : WWE: Bret "Hitman" Hart - The Best There Is, The Best There Was, The Best There Ever Will Be (2005)
+\item B00004YKS7 : Genghis Blues (1999)
+\item B00004YKS6 : Genghis Blues [VHS] (1999)
+\item B000MCIADA : A Reiki 1st, Aura and Chakra Attunement Performed (2007)
+\item B008COIZHQ : Genghis Blues 1999
+\item B006JN87UC : Transformers: Prime - Season One (Limited Edition) [Blu-ray] (2012)
+\item B003YBGJ4S : WELL worked out with Tannis
+\item B004LK24BI : 50/50 Cardio and Weights with Angie Gorr (2011)
+\end{enumerate}
+

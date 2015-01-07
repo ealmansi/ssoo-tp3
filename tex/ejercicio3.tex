@@ -1,0 +1,82 @@
+\subsection{Punto 3}
+
+Por cada puntaje de helpfulness, calcular la longitud promedio del review text.
+
+\subsubsection{Descripción}
+
+Función \textbf{map}:\\\\
+En este paso tomamos el texto de la review y asignamos su longitud a la propiedad \textbf{len} del objeto value a devolver, además de poner su propiedad \textbf{count} en 1. Luego emitimos este objeto con el puntaje de helpfulness como key.
+
+\begin{lstlisting}[frame=leftline]
+  function() {
+    var text = this.text;
+    var find = "<br />";
+    var regex = new RegExp(find, "g");
+    text = text.replace(regex, ""); // remove <br />
+    value = { 
+      count: 1, 
+      len: text.length 
+    };
+    var parts = this.helpfulness.split("/");
+	parts[0] = parseFloat(parts[0]);
+	parts[1] = parseFloat(parts[1]);
+	if (parts[1] != 0 && parts[0] <= parts[1])
+		emit((parts[0] / parts[1]).toFixed(4),value);	//key as number
+  }
+\end{lstlisting}
+
+Functión \textbf{reduce}:\\\\
+En este paso acumulamos para cada puntaje de helpfulness el total de ocurrencias de ese puntaje y la longitud de los reviews correspondientes:
+
+\begin{lstlisting}[frame=leftline]
+  function (key, values) {
+    reducedValue = { 
+      count: 0, 
+      len: 0 
+    }; 
+    for(var i=0; i < values.length; i++){
+      reducedValue.count += values[i].count;  // total occurences
+      reducedValue.len += values[i].len;      // total text length
+    }
+    return reducedValue;
+  }
+\end{lstlisting}
+
+Functión \textbf{finalize}:\\\\
+Aquí realizamos el cálculo del promedio de la longitud del texto para cada puntaje de helpfulness.
+
+\begin{lstlisting}[frame=leftline]
+  function (key, reducedValue){
+    return reducedValue.len / reducedValue.count; // average text length
+  }
+\end{lstlisting}
+
+\subsubsection{Resultado}
+
+Para la obtención de los datos pedidos modificamos el archivo \textit{runner.py} para que guarde la ejecución de \textbf{mapreduce} en una nueva colección llamada ``ej3'' y luego le pida a \textit{mongo} que nos devuelva los resultados obtenidos.\\
+
+\begin{lstlisting}[frame=leftline]
+getattr(db,outcoll).aggregate([{"$out" : outcoll}])
+coll = getattr(db,outcoll).find()
+for res in coll:
+	print "helpfulness:",
+	print res['_id'],
+	print ", average length:",
+	print res['value'] 
+\end{lstlisting}
+
+A modo de ejemplo mostraremos los primeros 10 resultados obtenidos: 
+
+\begin{enumerate}
+\item helpfulness: 0.0 , average length: 434.590073212
+\item helpfulness: 0.00401606425703 , average length: 429.0
+\item helpfulness: 0.00680272108844 , average length: 248.0
+\item helpfulness: 0.00819672131148 , average length: 200.0
+\item helpfulness: 0.00917431192661 , average length: 388.0
+\item helpfulness: 0.0102040816327 , average length: 418.0
+\item helpfulness: 0.0103092783505 , average length: 514.0
+\item helpfulness: 0.0108695652174 , average length: 755.0
+\item helpfulness: 0.0111111111111 , average length: 277.0
+\item helpfulness: 0.0113636363636 , average length: 490.5
+\end{enumerate}
+
